@@ -190,14 +190,14 @@
                 <div className="text-xs opacity-75">{time.toLocaleDateString(t.locale,{day:'2-digit',month:'short'})}</div>
               </div>
               <CircularProgress percentage={pilotData.flightReadiness} size={140} strokeWidth={6} color={rc}>
-                <div className="text-center"><div className="text-2xl font-bold">{pilotData.flightReadiness}%</div><div className="text-xs opacity-75">{t.readiness}</div></div>
+                <div className="text-center"><div className="text-2xl font-bold">{pilotData.flightReadiness}%</div><div className="text-xs opacity-75">{t.readiness}</div><div className="text-xs opacity-40 mt-1">{t.swipe}</div></div>
               </CircularProgress>
               <div className="grid grid-cols-3 gap-3 mt-4 text-center">
                 <div className="flex flex-col items-center"><Heart className="w-4 h-4 text-red-400 mb-1" /><div className="text-xs font-medium">{pilotData.heartRate}</div></div>
                 <div className="flex flex-col items-center"><Activity className="w-4 h-4 text-orange-400 mb-1" /><div className="text-xs font-medium">{pilotData.stressLevel}</div></div>
                 <div className="flex flex-col items-center"><Moon className="w-4 h-4 text-purple-400 mb-1" /><div className="text-xs font-medium">{pilotData.sleepQuality}%</div></div>
               </div>
-              <div className="absolute bottom-4 text-xs opacity-50">{t.swipe}</div>
+
             </div>
           );
         }
@@ -222,15 +222,14 @@
             {lang === 'tr' ? 'EN' : 'TR'}
           </button>
 
-          <div className="relative">
-            <div className="w-80 h-80 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 p-6 shadow-2xl">
-              <div className="w-full h-full rounded-full bg-gradient-to-br from-gray-900 to-black relative overflow-hidden cursor-pointer select-none" onClick={nextScreen} onContextMenu={(e)=>{e.preventDefault();prevScreen();}}>
-                <div className="absolute inset-2 rounded-full bg-gradient-to-br from-gray-800 to-gray-900">{renderScreen()}</div>
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white via-transparent to-transparent opacity-10"></div>
+          <div style={{position:'relative'}}>
+            <div style={{width:300,height:300,borderRadius:'50%',background:'linear-gradient(135deg,#374151,#111827)',padding:18,boxShadow:'0 20px 60px rgba(0,0,0,0.35)'}}>
+              <div onClick={nextScreen} onContextMenu={(e)=>{e.preventDefault();prevScreen();}} style={{width:'100%',height:'100%',borderRadius:'50%',background:'linear-gradient(135deg,#111827,#000)',position:'relative',overflow:'hidden',cursor:'pointer',userSelect:'none'}}>
+                <div style={{position:'absolute',inset:8,borderRadius:'50%',background:'linear-gradient(135deg,#1f2937,#111827)'}}>{renderScreen()}</div>
+                <div style={{position:'absolute',inset:0,borderRadius:'50%',background:'linear-gradient(135deg,rgba(255,255,255,0.08),transparent)',pointerEvents:'none'}}/>
               </div>
             </div>
-
-
+            <div style={{position:'absolute',right:-2,top:'50%',transform:'translateY(-50%)',width:6,height:28,background:'#6b7280',borderRadius:'0 4px 4px 0',boxShadow:'1px 0 3px rgba(0,0,0,0.3)'}}/>
           </div>
 
         </div>
