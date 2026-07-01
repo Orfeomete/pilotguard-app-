@@ -38,6 +38,11 @@
         swipe: 'Kaydır →',
         controls: 'Sol tık: İleri • Sağ tık: Geri',
         locale: 'tr-TR',
+        privTitle: 'Gizlilik',
+        privReal: 'Cihazda', privSent: 'Merkeze',
+        privCohort: 'k=5 kohort',
+        privNote: 'Merkeze giden değer gürültüyle bulanıklaşır ve 5 pilotluk kohortta erir — kimse sizi tanıyamaz.',
+        privSim: 'interaktif simülasyon',
       },
       en: {
         heartRate: 'Heart Rate',
@@ -62,6 +67,11 @@
         swipe: 'Swipe →',
         controls: 'Left click: Next • Right click: Prev',
         locale: 'en-GB',
+        privTitle: 'Privacy',
+        privReal: 'On device', privSent: 'To center',
+        privCohort: 'k=5 cohort',
+        privNote: 'The value sent is blurred with noise and dissolved into a 5-pilot cohort — no one can identify you.',
+        privSim: 'interactive simulation',
       }
     };
 
@@ -72,6 +82,11 @@
     const AlertTriangle = (p) => <svg xmlns="http://www.w3.org/2000/svg" width={p.size||24} height={p.size||24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={p.className}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>;
     const ChevronLeft = (p) => <svg xmlns="http://www.w3.org/2000/svg" width={p.size||24} height={p.size||24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={p.className}><polyline points="15 18 9 12 15 6"></polyline></svg>;
     const ChevronRight = (p) => <svg xmlns="http://www.w3.org/2000/svg" width={p.size||24} height={p.size||24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={p.className}><polyline points="9 18 15 12 9 6"></polyline></svg>;
+    const Shield = (p) => <svg xmlns="http://www.w3.org/2000/svg" width={p.size||24} height={p.size||24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={p.className}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>;
+
+    // Transparency (privacy screen) — Laplace differential privacy, ε = 1.0
+    const PRIV_REAL = 69, PRIV_EPS = 1.0, PRIV_SENS = 5, PRIV_B = PRIV_SENS / PRIV_EPS;
+    const laplaceNoise = (b) => { const u = Math.random() - 0.5; return -b * Math.sign(u) * Math.log(1 - 2 * Math.abs(u)); };
 
     const PilotGuardWatch = () => {
       const [currentScreen, setCurrentScreen] = useState('main');
@@ -81,8 +96,17 @@
         heartRate: 72, hrv: 46, stressLevel: 3,
         sleepQuality: 85, flightReadiness: 72, batteryLevel: 85
       });
+      const [sentHR, setSentHR] = useState(74);   // anonymized value sent to center (Laplace ε=1.0)
 
       const t = T[lang];
+
+      useEffect(() => {
+        const iv = setInterval(() => {
+          const s = Math.max(52, Math.min(88, Math.round(PRIV_REAL + laplaceNoise(PRIV_B))));
+          setSentHR(s);
+        }, 1600);
+        return () => clearInterval(iv);
+      }, []);
 
       useEffect(() => {
         const timer = setInterval(() => setTime(new Date()), 1000);
@@ -120,7 +144,7 @@
         );
       };
 
-      const screens = ['main','heart','stress','sleep','flight','alerts'];
+      const screens = ['main','heart','stress','sleep','flight','alerts','privacy'];
       const currentIndex = screens.indexOf(currentScreen);
       const nextScreen = () => setCurrentScreen(screens[(currentIndex + 1) % screens.length]);
       const prevScreen = () => setCurrentScreen(screens[(currentIndex - 1 + screens.length) % screens.length]);
@@ -183,6 +207,36 @@
               <div className="absolute bottom-4 flex justify-between w-full px-4"><ChevronLeft className="w-4 h-4 opacity-50" /><ChevronRight className="w-4 h-4 opacity-50" /></div>
             </div>
           );
+          case 'privacy': {
+            const d = sentHR - PRIV_REAL;
+            return (
+              <div className="flex flex-col items-center justify-center h-full text-white" style={{padding:'0 20px'}}>
+                <Shield className="w-6 h-6 text-emerald-400 mb-1" />
+                <div className="text-xs opacity-75 mb-3">{t.privTitle}</div>
+                <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}>
+                  <div style={{textAlign:'center'}}>
+                    <div style={{fontSize:8,opacity:0.55,textTransform:'uppercase',letterSpacing:'.5px'}}>{t.privReal}</div>
+                    <div style={{fontSize:22,fontWeight:700,fontFamily:'monospace',color:'#6ee7b7',lineHeight:1}}>69</div>
+                  </div>
+                  <div style={{textAlign:'center'}}>
+                    <div style={{fontSize:14,opacity:0.5}}>→</div>
+                    <div style={{fontSize:9,fontFamily:'monospace',fontWeight:700,color:d>=0?'#6ee7b7':'#fca5a5'}}>{d>=0?'+':'−'}{Math.abs(d)}</div>
+                  </div>
+                  <div style={{textAlign:'center'}}>
+                    <div style={{fontSize:8,opacity:0.55,textTransform:'uppercase',letterSpacing:'.5px'}}>{t.privSent}</div>
+                    <div style={{fontSize:22,fontWeight:700,fontFamily:'monospace',color:'#93c5fd',lineHeight:1}}>{sentHR}</div>
+                  </div>
+                </div>
+                <div style={{fontSize:8,opacity:0.5,fontFamily:'monospace',marginBottom:8}}>Laplace ε=1.0 · {t.privCohort}</div>
+                <div style={{display:'flex',gap:5,marginBottom:8}}>
+                  {[0,1,2,3,4].map(i=><div key={i} style={{width:9,height:9,borderRadius:'50%',background:i===0?'#34d399':'rgba(255,255,255,0.22)',border:i===0?'1px solid #6ee7b7':'1px solid rgba(255,255,255,0.3)'}}/>)}
+                </div>
+                <div style={{fontSize:9,opacity:0.7,textAlign:'center',lineHeight:1.4}}>{t.privNote}</div>
+                <div style={{fontSize:7,opacity:0.4,fontFamily:'monospace',marginTop:6}}>{t.privSim}</div>
+                <div className="absolute bottom-4 flex justify-between w-full px-4"><ChevronLeft className="w-4 h-4 opacity-50" /><ChevronRight className="w-4 h-4 opacity-50" /></div>
+              </div>
+            );
+          }
           default: return (
             <div className="flex flex-col items-center justify-center h-full text-white">
               <div className="text-center mb-4">
